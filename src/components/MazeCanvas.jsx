@@ -192,11 +192,17 @@ export default function MazeCanvas({ seed, onVictory, paused, autoPath, setAutoP
 		}, Math.min(MOVE_INTERVAL_MS, 130))
 	}, [maze, player, setAutoPath, onVictory, playWin, paused])
 
-	// Trigger auto solver when parent increments autoTrigger
+	// Space toggles auto: if running -> stop, else -> start
 	useEffect(() => {
 		if (autoTrigger == null) return
+		if (autoIntervalRef.current) {
+			clearInterval(autoIntervalRef.current)
+			autoIntervalRef.current = null
+			setAutoPath([])
+			return
+		}
 		runAutoSolver()
-	}, [autoTrigger, runAutoSolver])
+	}, [autoTrigger, runAutoSolver, setAutoPath])
 
 	// Pause should stop auto interval
 	useEffect(() => {
