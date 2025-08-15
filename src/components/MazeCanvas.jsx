@@ -1,5 +1,5 @@
-import { useEffect, useRef, useState, useMemo, useCallback } from 'react'
-import { rngFromSeed, randomSeed, generateMaze, canMove, stepDelta, directionFromKey, findPathBFS, computeCellSize, Direction } from '../utils/mazeUtils'
+import {useCallback, useEffect, useMemo, useRef, useState} from 'react'
+import {canMove, computeCellSize, directionFromKey, findPathBFS, generateMaze, randomSeed, rngFromSeed, stepDelta} from '../utils/mazeUtils.js'
 
 const ROWS = 25
 const COLS = 25
@@ -16,10 +16,10 @@ const COLORS = {
 	auto: '#60a5fa',
 }
 
-export default function MazeCanvas({ seed, onVictory, paused, autoPath, setAutoPath, playMove, playWin, autoTrigger, regenTick }) {
+export default function MazeCanvas({seed, onVictory, paused, autoPath, setAutoPath, playMove, playWin, autoTrigger, regenTick}){
 	const canvasRef = useRef(null)
 	const [maze, setMaze] = useState([])
-	const [player, setPlayer] = useState({ r: 0, c: 0, x: 0, y: 0 })
+	const [player, setPlayer] = useState({r: 0, c: 0, x: 0, y: 0})
 	const [heldDirection, setHeldDirection] = useState(null)
 	const [isFocused, setIsFocused] = useState(false)
 	const autoIntervalRef = useRef(null)
@@ -30,7 +30,7 @@ export default function MazeCanvas({ seed, onVictory, paused, autoPath, setAutoP
 	useEffect(() => {
 		const m = generateMaze(ROWS, COLS, rng)
 		setMaze(m)
-		setPlayer({ r: 0, c: 0, x: 0, y: 0 })
+		setPlayer({r: 0, c: 0, x: 0, y: 0})
 		setAutoPath([])
 		// stop any running auto animation
 		if (autoIntervalRef.current) {
@@ -40,7 +40,7 @@ export default function MazeCanvas({ seed, onVictory, paused, autoPath, setAutoP
 	}, [rng, setAutoPath, regenTick])
 
 	// Compute sizes
-	const { cell, padding } = useMemo(() => computeCellSize(CANVAS_SIZE, ROWS, COLS, 8), [])
+	const {cell, padding} = useMemo(() => computeCellSize(CANVAS_SIZE, ROWS, COLS, 8), [])
 
 	const draw = useCallback((ctx) => {
 		ctx.clearRect(0, 0, CANVAS_SIZE, CANVAS_SIZE)
@@ -109,23 +109,14 @@ export default function MazeCanvas({ seed, onVictory, paused, autoPath, setAutoP
 		draw(ctx)
 	}, [maze, player, autoPath, draw])
 
-	// Holding key movement interval
-	useEffect(() => {
-		if (paused || !heldDirection) return
-		const id = setInterval(() => {
-			attemptMove(heldDirection)
-		}, MOVE_INTERVAL_MS)
-		return () => clearInterval(id)
-	}, [heldDirection, paused])
-
 	const attemptMove = useCallback((dir) => {
 		if (paused || !maze.length) return
-		const { r, c } = player
+		const {r, c} = player
 		if (!canMove(maze, r, c, dir)) return
-		const { dr, dc } = stepDelta(dir)
+		const {dr, dc} = stepDelta(dir)
 		const nr = r + dr
 		const nc = c + dc
-		setPlayer({ r: nr, c: nc, x: 0, y: 0 })
+		setPlayer({r: nr, c: nc, x: 0, y: 0})
 		setAutoPath([])
 		playMove?.()
 		if (nr === ROWS - 1 && nc === COLS - 1) {
@@ -178,10 +169,10 @@ export default function MazeCanvas({ seed, onVictory, paused, autoPath, setAutoP
 			clearInterval(autoIntervalRef.current)
 		}
 		autoIntervalRef.current = setInterval(() => {
-			if (paused) return
+			if (paused || !autoTrigger) return
 			const next = path[i]
 			setAutoPath(path.slice(0, i + 1))
-			setPlayer({ r: next.r, c: next.c, x: 0, y: 0 })
+			setPlayer({r: next.r, c: next.c, x: 0, y: 0})
 			i += 1
 			if (i >= path.length) {
 				clearInterval(autoIntervalRef.current)
@@ -190,11 +181,14 @@ export default function MazeCanvas({ seed, onVictory, paused, autoPath, setAutoP
 				playWin?.()
 			}
 		}, Math.min(MOVE_INTERVAL_MS, 130))
-	}, [maze, player, setAutoPath, onVictory, playWin, paused])
+	}, [maze, player, setAutoPath, onVictory, playWin, paused, autoTrigger])
 
 	// Trigger auto solver when parent increments autoTrigger
 	useEffect(() => {
-		if (autoTrigger == null) return
+		if (!autoTrigger) {
+			clearInterval(autoIntervalRef.current);
+			return;
+		}
 		runAutoSolver()
 	}, [autoTrigger, runAutoSolver])
 
@@ -206,20 +200,22 @@ export default function MazeCanvas({ seed, onVictory, paused, autoPath, setAutoP
 		}
 	}, [paused])
 
-	useEffect(() => () => { if (autoIntervalRef.current) clearInterval(autoIntervalRef.current) }, [])
+	useEffect(() => () => {
+		if (autoIntervalRef.current) clearInterval(autoIntervalRef.current)
+	}, [])
 
 	return (
-		<div style={{ display: 'inline-block' }}>
+		<div style={{display: 'inline-block'}}>
 			<canvas
 				ref={canvasRef}
 				width={CANVAS_SIZE}
 				height={CANVAS_SIZE}
 				tabIndex={0}
-				style={{ outline: isFocused ? '2px solid #60a5fa' : 'none', cursor: 'pointer', background: COLORS.background }}
+				style={{outline: isFocused ? '2px solid #60a5fa' : 'none', cursor: 'pointer', background: COLORS.background}}
 				onClick={() => setIsFocused(true)}
 				aria-label="Maze canvas"
 			/>
-			<div style={{ marginTop: 8, color: '#6b7280', fontSize: 12 }}>
+			<div style={{marginTop: 8, color: '#6b7280', fontSize: 12}}>
 				Click the canvas to focus. Arrow keys to move. P: pause, R: new, Space: auto-solve.
 			</div>
 		</div>

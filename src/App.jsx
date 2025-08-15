@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import MazeCanvas from './components/MazeCanvas'
-import Controls from './components/Controls'
-import VictoryModal from './components/VictoryModal'
-import Legend from './components/Legend'
-import { randomSeed } from './utils/mazeUtils'
-import { useAudio } from './hooks/useAudio'
+import MazeCanvas from './components/MazeCanvas.jsx'
+import Controls from './components/Controls.jsx'
+import VictoryModal from './components/VictoryModal.jsx'
+import Legend from './components/Legend.jsx'
+import { randomSeed } from './utils/mazeUtils.js'
+import { useAudio } from './hooks/useAudio.js'
 import './App.css'
 
 export default function App() {
@@ -14,7 +14,7 @@ export default function App() {
 	const [paused, setPaused] = useState(false)
 	const [isVictory, setIsVictory] = useState(false)
 	const [autoPath, setAutoPath] = useState([])
-	const [autoTrigger, setAutoTrigger] = useState(0)
+	const [autoTrigger, setAutoTrigger] = useState(false)
 	const [regenTick, setRegenTick] = useState(0)
 	const { playMove, playWin } = useAudio()
 
@@ -50,7 +50,7 @@ export default function App() {
 			}
 			if (e.code === 'Space') {
 				e.preventDefault()
-				setAutoTrigger((t) => t + 1)
+				setAutoTrigger((t) => !t)
 			}
 		}
 		document.addEventListener('keydown', handler)
@@ -66,7 +66,7 @@ export default function App() {
 				paused={paused}
 				setPaused={setPaused}
 				onNewGame={onNewGame}
-				onAuto={() => setAutoTrigger((t) => t + 1)}
+				onAuto={() => setAutoTrigger((t) =>!t)}
 			/>
 			<MazeCanvas
 				seed={seed}
