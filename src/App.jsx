@@ -10,9 +10,12 @@ import './App.css'
 export default function App() {
 	const urlSeed = useMemo(() => new URLSearchParams(window.location.search).get('seed') || '', [])
 	const [seed, setSeed] = useState(urlSeed || randomSeed())
+	const [customSeed, setCustomSeed] = useState(!!urlSeed)
 	const [paused, setPaused] = useState(false)
 	const [isVictory, setIsVictory] = useState(false)
 	const [autoPath, setAutoPath] = useState([])
+	const [autoTrigger, setAutoTrigger] = useState(0)
+	const [regenTick, setRegenTick] = useState(0)
 	const { playMove, playWin } = useAudio()
 
 	useEffect(() => {
@@ -26,12 +29,16 @@ export default function App() {
 	const onNewGame = useCallback(() => {
 		setIsVictory(false)
 		setAutoPath([])
-		setSeed((prev) => prev) // trigger MazeCanvas useEffect via seed state or regenerate via changing seed externally
-	}, [])
+		if (!customSeed) {
+			setSeed(randomSeed())
+		} else {
+			setRegenTick((n) => n + 1)
+		}
+	}, [customSeed])
 
 	const onVictory = useCallback(() => setIsVictory(true), [])
 
-	// Global hotkeys for R, P, Space
+	// Global hotkeys for P, R, Space
 	useEffect(() => {
 		const handler = (e) => {
 			if (e.key === 'p' || e.key === 'P') {
@@ -40,6 +47,10 @@ export default function App() {
 			if (e.key === 'r' || e.key === 'R') {
 				e.preventDefault()
 				onNewGame()
+			}
+			if (e.code === 'Space') {
+				e.preventDefault()
+				setAutoTrigger((t) => t + 1)
 			}
 		}
 		document.addEventListener('keydown', handler)
@@ -51,11 +62,11 @@ export default function App() {
 			<h1>Maze 25×25</h1>
 			<Controls
 				seed={seed}
-				setSeed={(s) => { setSeed(s); setIsVictory(false); setAutoPath([]) }}
+				setSeed={(s) => { setSeed(s); setCustomSeed(!!s); setIsVictory(false); setAutoPath([]); setRegenTick((n) => n + 1) }}
 				paused={paused}
 				setPaused={setPaused}
-				onNewGame={() => { setIsVictory(false); setAutoPath([]); setSeed((prev) => prev) }}
-				onAuto={() => { /* handled by MazeCanvas via control bridge */ }}
+				onNewGame={onNewGame}
+				onAuto={() => setAutoTrigger((t) => t + 1)}
 			/>
 			<MazeCanvas
 				seed={seed}
@@ -65,9 +76,11 @@ export default function App() {
 				setAutoPath={setAutoPath}
 				playMove={playMove}
 				playWin={playWin}
+				autoTrigger={autoTrigger}
+				regenTick={regenTick}
 			/>
 			<Legend />
-			<VictoryModal visible={isVictory} onNewGame={() => { setIsVictory(false); setAutoPath([]); setSeed((prev) => prev) }} />
+			<VictoryModal visible={isVictory} onNewGame={onNewGame} />
 		</div>
 	)
 }

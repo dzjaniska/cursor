@@ -16,7 +16,7 @@ const COLORS = {
 	auto: '#60a5fa',
 }
 
-export default function MazeCanvas({ seed, onVictory, paused, autoPath, setAutoPath, playMove, playWin, autoTrigger }) {
+export default function MazeCanvas({ seed, onVictory, paused, autoPath, setAutoPath, playMove, playWin, autoTrigger, regenTick }) {
 	const canvasRef = useRef(null)
 	const [maze, setMaze] = useState([])
 	const [player, setPlayer] = useState({ r: 0, c: 0, x: 0, y: 0 })
@@ -26,7 +26,7 @@ export default function MazeCanvas({ seed, onVictory, paused, autoPath, setAutoP
 
 	const rng = useMemo(() => rngFromSeed(seed || randomSeed()), [seed])
 
-	// Generate maze when seed changes
+	// Generate maze when seed or regenTick changes
 	useEffect(() => {
 		const m = generateMaze(ROWS, COLS, rng)
 		setMaze(m)
@@ -37,7 +37,7 @@ export default function MazeCanvas({ seed, onVictory, paused, autoPath, setAutoP
 			clearInterval(autoIntervalRef.current)
 			autoIntervalRef.current = null
 		}
-	}, [rng, setAutoPath])
+	}, [rng, setAutoPath, regenTick])
 
 	// Compute sizes
 	const { cell, padding } = useMemo(() => computeCellSize(CANVAS_SIZE, ROWS, COLS, 8), [])
